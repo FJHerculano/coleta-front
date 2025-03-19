@@ -17,38 +17,43 @@
         
         <div class="card-body">
 
+            <LoadingSpinner :isLoading="isLoading"/>
+
             <div class="table-responsive">
 
                 <div class="table-responsive">
                     <table class="table">
                         <thead>
                             <tr>
-                                <th scope="col">#</th>
-                                <th scope="col">First</th>
-                                <th scope="col">Last</th>
-                                <th scope="col">blau</th>
+                                <th scope="col">Ações</th>
+                                <th scope="col">Nome</th>
+                                <th scope="col">Criada</th>
+                                <th scope="col">Atualizada</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <th scope="row">1</th>
-                                <td>Mark</td>
-                                <td>Otto</td>
-                                <td>@mdo</td>
-                            </tr>
-                            <tr>
-                                <th scope="row">2</th>
-                                <td>reger</td>
-                                <td>fwerfw</td>
-                                <td>@ewfew</td>
-                            </tr>
-                            <tr>
-                                <th scope="row">3</th>
-                                <td>erfgrewq</td>
-                                <td>rgre</td>
-                                <td>@rgre</td>
+
+                            <tr v-if="companies.length === 0">
+                               
+                                <td class="text-center" colspan="4">Não há dados para exibir</td>
+
                             </tr>
 
+                            <tr v-else v-for="company in companies" :key="company.id">
+                               
+                                <RouterLink 
+                                    class="btn btn-sm btn-outline-primary" 
+                                    :to="{name: 'ShowCompanyView', params: {id: company.id}}"
+                                >
+                                    <i class="bi bi-eye"></i>&nbsp;
+                                    Detalhes da Empresa
+                                </RouterLink>
+                            
+                                <td>{{ company.name }}</td>
+                                <td>{{ company.created_at }}</td>
+                                <td>{{ company.updated_at }}</td>
+
+                           </tr>
                         </tbody>
                     </table>
                 </div>
@@ -65,6 +70,56 @@
 
 <script>
     import { RouterLink } from 'vue-router';
+    import CompaniesApi from '@/services/api/CompaniesApi';
+    import { toast } from 'vue3-toastify';
+    import { defineComponent, ref, onMounted } from 'vue';
+    import LoadingSpinner from '@/components/LoadingSpinner.vue'
+
+    export default defineComponent({
+        name: 'CompaniesView',
+
+        components:{
+            LoadingSpinner,
+        },
+
+        setup(){
+            
+            const companies = ref([]);
+            const isLoading = ref(true);
+
+            const fetchCompanies = async () => {
+                try{
+
+                    const api = new CompaniesApi();
+
+                    const data = await api.list();
+                    companies.value = data;
+
+                   isLoading.value = false;
+
+
+
+                }catch(error){
+                    
+                    if(error.response && error.response.status !== 401){
+
+                        toast.error(`Erro ao recuperar os registros : ${error}`,{
+                            'theme': 'colored',
+                            hideProgressBar: true,
+                        });
+                    }
+
+                    console.log(`Erro ao recuperar os registros : ${error}`);
+                }
+            }
+
+            onMounted(fetchCompanies);
+
+            return{ companies, isLoading }
+        }
+
+    })
+
 </script>
 
 <style scoped></style>
